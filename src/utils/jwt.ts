@@ -1,4 +1,4 @@
-import { TokenPayload } from "@/models/requests/user.request";
+import { TokenPayload } from "@/models/validates/auth.zod";
 import { SignOptions } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 

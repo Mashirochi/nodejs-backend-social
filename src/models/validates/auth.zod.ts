@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TokenType } from "@/utils/constants/user.enum";
+import { TokenType, UserVerifyStatus } from "@/models/validates/user.zod";
 
 const passwordSchema = z
   .string()
@@ -72,7 +72,16 @@ export const forgotPasswordTokenSchema = z.string().min(1, "Forgot password toke
 
 export const tokenPayloadSchema = z.object({
   user_id: z.string(),
+  verify: z.nativeEnum(UserVerifyStatus).optional(),
   token_type: z.enum(TokenType),
+  iat: z.number().optional(),
+  exp: z.number().optional()
+});
+
+export const accessTokenPayloadSchema = z.object({
+  user_id: z.string(),
+  verify: z.nativeEnum(UserVerifyStatus),
+  token_type: z.literal(TokenType.AccessToken),
   iat: z.number().optional(),
   exp: z.number().optional()
 });

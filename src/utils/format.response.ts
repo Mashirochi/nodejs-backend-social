@@ -74,7 +74,7 @@ const responser = (_request: Request, response: Response, next: NextFunction) =>
       const hasContent = content && !isObjectEmpty(content);
       const responseMessage = this.locals.responseMessage || message;
       this.status(code).json({
-        status,
+        timestamp: new Date().toISOString(),
         statusCode: code,
         success,
         message: responseMessage,

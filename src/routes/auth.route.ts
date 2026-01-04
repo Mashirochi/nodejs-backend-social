@@ -1,5 +1,5 @@
 import {
-  emailVerifyValidator,
+  emailVerifyController,
   forgotPasswordController,
   loginController,
   logoutController,
@@ -17,7 +17,7 @@ import {
   resetPasswordValidator,
   validateSchema
 } from "@/middlewares/auth.middleware";
-import { loginReqBodySchema, registerReqBodySchema, verifyEmailReqBodySchema, forgotPasswordReqBodySchema, logoutReqBodySchema, resetPasswordReqBodySchema } from "@/models/schemas/auth.zod";
+import { loginReqBodySchema, registerReqBodySchema, verifyEmailReqBodySchema, forgotPasswordReqBodySchema, logoutReqBodySchema, resetPasswordReqBodySchema } from "@/models/validates/auth.zod";
 import { wrapRequestHandler } from "@/utils/handler";
 import { ResponseMessage } from "@/utils/response-message";
 import { Router } from "express";
@@ -26,7 +26,7 @@ const authRouter = Router();
 
 authRouter.post("/login", ResponseMessage("Login user"), validateSchema(loginReqBodySchema), loginValidator, loginController);
 authRouter.post("/register", ResponseMessage("Register a new user"), validateSchema(registerReqBodySchema), registerValidator, registerController);
-authRouter.post("/verify-email", ResponseMessage("Verify email"), validateSchema(verifyEmailReqBodySchema), emailVerifyTokenValidator, wrapRequestHandler(emailVerifyValidator));
+authRouter.post("/verify-email", ResponseMessage("Verify email"), validateSchema(verifyEmailReqBodySchema), emailVerifyTokenValidator, wrapRequestHandler(emailVerifyController));
 authRouter.post("/resend-verify-email", ResponseMessage("Resend verify email"), accessTokenValidator, wrapRequestHandler(resendVerifyEmailController));
 authRouter.post("/forgot-password", ResponseMessage("Forgot password"), validateSchema(forgotPasswordReqBodySchema), forgotPasswordValidator, wrapRequestHandler(forgotPasswordController));
 authRouter.post("/logout", ResponseMessage("Logout user"), validateSchema(logoutReqBodySchema), accessTokenValidator, refreshTokenValidator, wrapRequestHandler(logoutController));

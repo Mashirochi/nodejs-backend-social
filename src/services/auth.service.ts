@@ -1,12 +1,12 @@
 import User from "@/models/schemas/user.schema";
 import databaseService from "./database.service";
-import { TokenType, UserVerifyStatus } from "@/utils/constants/user.enum";
+import { TokenType, UserVerifyStatus } from "@/models/validates/user.zod";
 import { USERS_MESSAGES } from "@/utils/constants/message";
 import { ObjectId } from "mongodb";
 import RefreshToken from "@/models/schemas/refresh-token.schema";
 import { hashPassword } from "@/utils/crypto";
 import { jwtService } from "./jwt.service";
-import { RegisterReqBody } from "@/models/schemas/auth.zod";
+import { RegisterReqBody } from "@/models/validates/auth.zod";
 
 class AuthService {
   async register(payload: RegisterReqBody) {
@@ -21,7 +21,8 @@ class AuthService {
         password: await hashPassword(payload.password)
       })
     );
-    const [access_token, refresh_token] = await jwtService.generateAccessAndRefreshTokens(user_id.toString());
+    const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) });
+    const [access_token, refresh_token] = await jwtService.generateAccessAndRefreshTokens(user_id.toString(), user?.verify || UserVerifyStatus.Unverified);
     await databaseService.refreshTokens.insertOne(new RefreshToken({ user_id: new ObjectId(user_id), token: refresh_token }));
     console.log("email_verify_token: ", email_verify_token);
     return {
@@ -31,7 +32,8 @@ class AuthService {
   }
 
   async loginAfterAuthentication(user_id: string) {
-    const [access_token, refresh_token] = await jwtService.generateAccessAndRefreshTokens(user_id);
+    const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) });
+    const [access_token, refresh_token] = await jwtService.generateAccessAndRefreshTokens(user_id, user?.verify || UserVerifyStatus.Unverified);
     await databaseService.refreshTokens.insertOne(new RefreshToken({ user_id: new ObjectId(user_id), token: refresh_token }));
     return {
       access_token,
@@ -53,17 +55,16 @@ class AuthService {
 
   async verifyEmail(user_id: string) {
     const [token] = await Promise.all([
-      jwtService.generateAccessAndRefreshTokens(user_id),
-      databaseService.users.updateOne(
-        { _id: new ObjectId(user_id) },
+      await jwtService.generateAccessAndRefreshTokens(user_id, UserVerifyStatus.Verified),
+      databaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
         {
           $set: {
             email_verify_token: "",
             verify: UserVerifyStatus.Verified,
-            updated_at: new Date()
+            updated_at: "$$NOW"
           }
         }
-      )
+      ])
     ]);
     const [access_token, refresh_token] = token;
     return {

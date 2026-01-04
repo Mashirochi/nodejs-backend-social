@@ -23,11 +23,11 @@ import { comparePassword, hashPassword } from "@/utils/crypto";
 import { ObjectId } from "mongodb";
 import { ErrorWithStatus, EntityError } from "@/utils/errors";
 import { verifyToken } from "@/utils/jwt";
-import HTTP_STATUS from "@/utils/constants/httpStatus";
 import { JsonWebTokenError } from "jsonwebtoken";
 import { capitalize } from "lodash";
-import { tokenPayloadSchema } from "@/models/schemas/auth.zod";
+import { tokenPayloadSchema, accessTokenPayloadSchema } from "@/models/validates/auth.zod";
 import { z } from "zod";
+import { StatusCodes } from "http-status-codes";
 
 export const validateSchema = (schema: z.ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -53,12 +53,17 @@ const validateToken = async (token: string, secret: string, req: Request, tokenT
   if (!token) {
     throw new ErrorWithStatus({
       message: USERS_MESSAGES[`${tokenType.toUpperCase()}_TOKEN_IS_REQUIRED` as keyof typeof USERS_MESSAGES],
-      status: HTTP_STATUS.UNAUTHORIZED
+      status: StatusCodes.UNAUTHORIZED
     });
   }
   try {
     const decoded_token = await verifyToken({ token, secretOrPublicKey: secret });
-    tokenPayloadSchema.parse(decoded_token);
+    // Validate token payload based on token type
+    if (tokenType === "access") {
+      accessTokenPayloadSchema.parse(decoded_token);
+    } else {
+      tokenPayloadSchema.parse(decoded_token);
+    }
 
     switch (tokenType) {
       case "access":
@@ -79,12 +84,12 @@ const validateToken = async (token: string, secret: string, req: Request, tokenT
     if (error instanceof JsonWebTokenError) {
       throw new ErrorWithStatus({
         message: capitalize(error.message),
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     } else if (error instanceof z.ZodError) {
       throw new ErrorWithStatus({
         message: "Invalid token payload",
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     }
     throw error;
@@ -95,7 +100,7 @@ const validateForgotPasswordToken = async (value: string, req: Request) => {
   if (!value) {
     throw new ErrorWithStatus({
       message: USERS_MESSAGES.FORGOT_PASSWORD_TOKEN_IS_REQUIRED,
-      status: HTTP_STATUS.UNAUTHORIZED
+      status: StatusCodes.UNAUTHORIZED
     });
   }
   try {
@@ -108,13 +113,13 @@ const validateForgotPasswordToken = async (value: string, req: Request) => {
     if (user === null) {
       throw new ErrorWithStatus({
         message: USERS_MESSAGES.USER_NOT_FOUND,
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     }
     if (user.forgot_password_token !== value) {
       throw new ErrorWithStatus({
         message: USERS_MESSAGES.INVALID_FORGOT_PASSWORD_TOKEN,
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     }
     req.decoded_forgot_password_token = decoded_forgot_password_token;
@@ -122,7 +127,7 @@ const validateForgotPasswordToken = async (value: string, req: Request) => {
     if (error instanceof JsonWebTokenError) {
       throw new ErrorWithStatus({
         message: capitalize(error.message),
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     }
     throw error;
@@ -142,7 +147,7 @@ export const loginValidator = async (req: Request, res: Response, next: NextFunc
     if (user === null || !isCorrectPassword) {
       throw new ErrorWithStatus({
         message: USERS_MESSAGES.EMAIL_OR_PASSWORD_IS_INCORRECT,
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     }
 
@@ -177,7 +182,7 @@ export const accessTokenValidator = async (req: Request, res: Response, next: Ne
     if (!access_token) {
       throw new ErrorWithStatus({
         message: USERS_MESSAGES.ACCESS_TOKEN_IS_REQUIRED,
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     }
 
@@ -195,7 +200,7 @@ export const refreshTokenValidator = async (req: Request, res: Response, next: N
     if (!refresh_token) {
       throw new ErrorWithStatus({
         message: USERS_MESSAGES.REFRESH_TOKEN_IS_REQUIRED,
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     }
 
@@ -208,7 +213,7 @@ export const refreshTokenValidator = async (req: Request, res: Response, next: N
     if (tokenFromDB === null) {
       throw new ErrorWithStatus({
         message: USERS_MESSAGES.USED_REFRESH_TOKEN_OR_NOT_EXIST,
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     }
 
@@ -219,7 +224,7 @@ export const refreshTokenValidator = async (req: Request, res: Response, next: N
     if (error instanceof JsonWebTokenError) {
       throw new ErrorWithStatus({
         message: capitalize(error.message),
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     }
     next(error);
@@ -232,7 +237,7 @@ export const emailVerifyTokenValidator = async (req: Request, res: Response, nex
     if (!email_verify_token) {
       throw new ErrorWithStatus({
         message: USERS_MESSAGES.EMAIL_VERIFY_TOKEN_IS_REQUIRED,
-        status: HTTP_STATUS.UNAUTHORIZED
+        status: StatusCodes.UNAUTHORIZED
       });
     }
 
@@ -253,7 +258,7 @@ export const forgotPasswordValidator = async (req: Request, res: Response, next:
     if (user === null) {
       throw new ErrorWithStatus({
         message: USERS_MESSAGES.USER_NOT_FOUND,
-        status: HTTP_STATUS.NOT_FOUND
+        status: StatusCodes.NOT_FOUND
       });
     }
 

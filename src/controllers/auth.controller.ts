@@ -3,9 +3,9 @@ import { USERS_MESSAGES } from "@/utils/constants/message";
 import { NextFunction, Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { ParamsDictionary } from "express-serve-static-core";
-import { ForgotPasswordReqBody, LogoutReqBody, RegisterReqBody, ResetPasswordReqBody, TokenPayload } from "@/models/schemas/auth.zod";
+import { ForgotPasswordReqBody, LogoutReqBody, RegisterReqBody, ResetPasswordReqBody, TokenPayload } from "@/models/validates/auth.zod";
 import databaseService from "@/services/database.service";
-import { UserVerifyStatus } from "@/utils/constants/user.enum";
+import { UserVerifyStatus } from "@/models/validates/user.zod";
 import authService from "@/services/auth.service";
 
 export const loginController = async (req: Request, res: Response) => {
@@ -26,7 +26,7 @@ export const logoutController = async (req: Request<ParamsDictionary, any, Logou
   return res.send_ok(USERS_MESSAGES.LOGOUT_SUCCESS, result);
 };
 
-export const emailVerifyValidator = async (req: Request, res: Response, next: NextFunction) => {
+export const emailVerifyController = async (req: Request, res: Response, next: NextFunction) => {
   const { user_id } = req.decoded_email_verify_token as TokenPayload;
   const user = await databaseService.users.findOne({
     _id: new ObjectId(user_id)

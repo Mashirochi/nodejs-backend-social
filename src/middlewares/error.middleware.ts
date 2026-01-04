@@ -1,6 +1,6 @@
-import HTTP_STATUS from "@/utils/constants/httpStatus";
 import { ErrorWithStatus, EntityError } from "@/utils/errors";
 import { NextFunction, Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 
 export const defaultErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   const responseMessage = res.locals.responseMessage || null;
@@ -9,6 +9,7 @@ export const defaultErrorHandler = (err: any, req: Request, res: Response, next:
     const errorMessages = Object.values(err.errors).map((error) => error.msg);
 
     return res.status(err.status).json({
+      timestamp: new Date().toISOString(),
       statusCode: err.status,
       success: false,
       message: responseMessage || err.message,
@@ -18,6 +19,7 @@ export const defaultErrorHandler = (err: any, req: Request, res: Response, next:
 
   if (err instanceof ErrorWithStatus) {
     return res.status(err.status).json({
+      timestamp: new Date().toISOString(),
       statusCode: err.status,
       success: false,
       message: responseMessage || err.message,
@@ -29,7 +31,7 @@ export const defaultErrorHandler = (err: any, req: Request, res: Response, next:
     Object.defineProperty(err, key, { enumerable: true });
   });
 
-  const statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR;
+  const statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   res.status(statusCode).json({
     timestamp: new Date().toISOString(),
     statusCode: statusCode,
