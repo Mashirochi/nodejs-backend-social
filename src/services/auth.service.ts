@@ -1,59 +1,17 @@
 import User from "@/models/schemas/user.schema";
 import databaseService from "./database.service";
 import { TokenType, UserVerifyStatus } from "@/utils/constants/user.enum";
-import { RegisterReqBody } from "@/models/requests/user.request";
-import { signToken } from "@/utils/jwt";
 import { USERS_MESSAGES } from "@/utils/constants/message";
 import { ObjectId } from "mongodb";
 import RefreshToken from "@/models/schemas/refresh-token.schema";
-import { comparePassword, hashPassword } from "@/utils/crypto";
+import { hashPassword } from "@/utils/crypto";
+import { jwtService } from "./jwt.service";
+import { RegisterReqBody } from "@/models/schemas/auth.zod";
 
-class UserService {
-  private signAccessToken(user_id: string) {
-    return signToken()({
-      payload: {
-        user_id,
-        token_type: TokenType.AccessToken
-      },
-      privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
-      options: {
-        expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES_IN)
-      }
-    });
-  }
-  private signRefreshToken(user_id: string) {
-    return signToken()({
-      payload: {
-        user_id,
-        token_type: TokenType.RefreshToken
-      },
-      privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
-      options: {
-        expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRES_IN)
-      }
-    });
-  }
-
-  private signEmailVerifyToken(user_id: string) {
-    return signToken()({
-      payload: {
-        user_id,
-        token_type: TokenType.EmailVerifyToken
-      },
-      privateKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string,
-      options: {
-        expiresIn: Number(process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN)
-      }
-    });
-  }
-
-  private signAccessAndRefreshToken(user_id: string) {
-    return Promise.all([this.signAccessToken(user_id), this.signRefreshToken(user_id)]);
-  }
-
+class AuthService {
   async register(payload: RegisterReqBody) {
     const user_id = new ObjectId();
-    const email_verify_token = await this.signEmailVerifyToken(user_id.toString());
+    const email_verify_token = await jwtService.generateEmailVerifyToken(user_id.toString());
     await databaseService.users.insertOne(
       new User({
         ...payload,
@@ -63,7 +21,7 @@ class UserService {
         password: await hashPassword(payload.password)
       })
     );
-    const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id.toString());
+    const [access_token, refresh_token] = await jwtService.generateAccessAndRefreshTokens(user_id.toString());
     await databaseService.refreshTokens.insertOne(new RefreshToken({ user_id: new ObjectId(user_id), token: refresh_token }));
     console.log("email_verify_token: ", email_verify_token);
     return {
@@ -73,7 +31,7 @@ class UserService {
   }
 
   async loginAfterAuthentication(user_id: string) {
-    const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id);
+    const [access_token, refresh_token] = await jwtService.generateAccessAndRefreshTokens(user_id);
     await databaseService.refreshTokens.insertOne(new RefreshToken({ user_id: new ObjectId(user_id), token: refresh_token }));
     return {
       access_token,
@@ -95,7 +53,7 @@ class UserService {
 
   async verifyEmail(user_id: string) {
     const [token] = await Promise.all([
-      this.signAccessAndRefreshToken(user_id),
+      jwtService.generateAccessAndRefreshTokens(user_id),
       databaseService.users.updateOne(
         { _id: new ObjectId(user_id) },
         {
@@ -115,7 +73,7 @@ class UserService {
   }
 
   async resendVerifyEmail(user_id: string) {
-    const email_verify_token = await this.signEmailVerifyToken(user_id);
+    const email_verify_token = await jwtService.generateEmailVerifyToken(user_id);
     // add resend email
     console.log("Rensend verify email: ", email_verify_token);
 
@@ -134,7 +92,41 @@ class UserService {
       message: USERS_MESSAGES.RESEND_VERIFY_EMAIL_SUCCESS
     };
   }
+
+  async forgotPassword(user_id: string) {
+    const forgot_password_token = await jwtService.generateForgotPasswordToken(user_id);
+    await databaseService.users.updateOne({ _id: new ObjectId(user_id) }, [
+      {
+        $set: {
+          forgot_password_token,
+          updated_at: "$$NOW"
+        }
+      }
+    ]);
+    console.log("forgot_password_token: ", forgot_password_token);
+    return {
+      message: USERS_MESSAGES.CHECK_EMAIL_TO_RESET_PASSWORD
+    };
+  }
+
+  async resetPassword(user_id: string, password: string) {
+    databaseService.users.updateOne(
+      { _id: new ObjectId(user_id) },
+      {
+        $set: {
+          forgot_password_token: "",
+          password: await hashPassword(password)
+        },
+        $currentDate: {
+          updated_at: true
+        }
+      }
+    );
+    return {
+      message: USERS_MESSAGES.RESET_PASSWORD_SUCCESS
+    };
+  }
 }
 
-const userService = new UserService();
-export default userService;
+const authService = new AuthService();
+export default authService;

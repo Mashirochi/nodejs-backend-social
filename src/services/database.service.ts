@@ -13,7 +13,6 @@ class DatabaseService {
 
   async connect() {
     try {
-      console.log(process.env.MONGO_URI);
       // Send a ping to confirm a successful connection
       await this.client.db(process.env.DB_NAME).command({ ping: 1 });
       console.log("Connected successfully to server");
