@@ -1,12 +1,13 @@
 import { TokenPayload } from "@/models/validates/auth.zod";
 import { SignOptions } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
+import envConfig from "./validateEnv";
 
 export const signToken =
   () =>
   ({
     payload,
-    privateKey = process.env.JWT_PRIVATE_KEY!,
+    privateKey = envConfig.JWT_PRIVATE_KEY!,
     options = {
       algorithm: "HS256"
     }
@@ -25,7 +26,7 @@ export const signToken =
     });
   };
 
-export const verifyToken = ({ token, secretOrPublicKey = process.env.JWT_SECRET as string }: { token: string; secretOrPublicKey?: string }) => {
+export const verifyToken = ({ token, secretOrPublicKey = envConfig.JWT_SECRET as string }: { token: string; secretOrPublicKey?: string }) => {
   return new Promise<TokenPayload>((resolve, reject) => {
     jwt.verify(token, secretOrPublicKey, (error, decoded) => {
       if (error) {

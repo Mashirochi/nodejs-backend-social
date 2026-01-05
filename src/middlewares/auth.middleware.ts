@@ -28,6 +28,7 @@ import { capitalize } from "lodash";
 import { tokenPayloadSchema, accessTokenPayloadSchema } from "@/models/validates/auth.zod";
 import { z } from "zod";
 import { StatusCodes } from "http-status-codes";
+import envConfig from "@/utils/validateEnv";
 
 export const validateSchema = (schema: z.ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -106,7 +107,7 @@ const validateForgotPasswordToken = async (value: string, req: Request) => {
   try {
     const decoded_forgot_password_token = await verifyToken({
       token: value,
-      secretOrPublicKey: process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN as string
+      secretOrPublicKey: envConfig.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string
     });
     const { user_id } = decoded_forgot_password_token;
     const user = await databaseService.users.findOne({ _id: new ObjectId(user_id) });
@@ -186,7 +187,7 @@ export const accessTokenValidator = async (req: Request, res: Response, next: Ne
       });
     }
 
-    await validateToken(access_token, process.env.JWT_SECRET_ACCESS_TOKEN as string, req, "access");
+    await validateToken(access_token, envConfig.JWT_SECRET_ACCESS_TOKEN as string, req, "access");
 
     return next();
   } catch (error) {
@@ -206,7 +207,7 @@ export const refreshTokenValidator = async (req: Request, res: Response, next: N
 
     // Validate JWT and check if token exists in database
     const [decoded_refresh_token, tokenFromDB] = await Promise.all([
-      verifyToken({ token: refresh_token, secretOrPublicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string }),
+      verifyToken({ token: refresh_token, secretOrPublicKey: envConfig.JWT_SECRET_REFRESH_TOKEN as string }),
       databaseService.refreshTokens.findOne({ token: refresh_token })
     ]);
 
@@ -241,7 +242,7 @@ export const emailVerifyTokenValidator = async (req: Request, res: Response, nex
       });
     }
 
-    await validateToken(email_verify_token, process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string, req, "email_verify");
+    await validateToken(email_verify_token, envConfig.JWT_SECRET_EMAIL_VERIFY_TOKEN as string, req, "email_verify");
 
     return next();
   } catch (error) {

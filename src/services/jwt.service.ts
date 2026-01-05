@@ -1,5 +1,6 @@
 import { TokenType, UserVerifyStatus } from "@/models/validates/user.zod";
 import { signToken } from "@/utils/jwt";
+import envConfig from "@/utils/validateEnv";
 
 export class JwtService {
   private signAccessToken(user_id: string, verify: UserVerifyStatus = UserVerifyStatus.Unverified) {
@@ -9,9 +10,9 @@ export class JwtService {
         verify,
         token_type: TokenType.AccessToken
       },
-      privateKey: process.env.JWT_SECRET_ACCESS_TOKEN as string,
+      privateKey: envConfig.JWT_SECRET_ACCESS_TOKEN as string,
       options: {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN ? parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN, 10) : undefined
+        expiresIn: envConfig.ACCESS_TOKEN_EXPIRES_IN ? parseInt(envConfig.ACCESS_TOKEN_EXPIRES_IN, 10) : undefined
       }
     });
   }
@@ -22,9 +23,9 @@ export class JwtService {
         user_id,
         token_type: TokenType.RefreshToken
       },
-      privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string,
+      privateKey: envConfig.JWT_SECRET_REFRESH_TOKEN as string,
       options: {
-        expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRES_IN)
+        expiresIn: Number(envConfig.REFRESH_TOKEN_EXPIRES_IN)
       }
     });
   }
@@ -35,9 +36,9 @@ export class JwtService {
         user_id,
         token_type: TokenType.EmailVerifyToken
       },
-      privateKey: process.env.JWT_SECRET_EMAIL_VERIFY_TOKEN as string,
+      privateKey: envConfig.JWT_SECRET_EMAIL_VERIFY_TOKEN as string,
       options: {
-        expiresIn: Number(process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN)
+        expiresIn: Number(envConfig.EMAIL_VERIFY_TOKEN_EXPIRES_IN)
       }
     });
   }
@@ -52,9 +53,9 @@ export class JwtService {
         user_id,
         token_type: TokenType.ForgotPasswordToken
       },
-      privateKey: process.env.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string,
+      privateKey: envConfig.JWT_SECRET_FORGOT_PASSWORD_TOKEN as string,
       options: {
-        expiresIn: Number(process.env.EMAIL_VERIFY_TOKEN_EXPIRES_IN)
+        expiresIn: Number(envConfig.EMAIL_VERIFY_TOKEN_EXPIRES_IN)
       }
     });
   }

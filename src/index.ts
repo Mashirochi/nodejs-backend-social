@@ -1,14 +1,13 @@
 import { Request, Response } from "express";
-import "dotenv/config";
 import databaseService from "./services/database.service";
-import userRouter from "./routes/auth.route";
 import express from "express";
 import responser from "./utils/format.response";
 import { defaultErrorHandler } from "./middlewares/error.middleware";
 import AppRoute from "./routes/app.route";
+import envConfig from "./utils/validateEnv";
 
 const app = express();
-const port = process.env.PORT || 8000;
+const port = envConfig.PORT || 8000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
