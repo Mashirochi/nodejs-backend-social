@@ -32,6 +32,7 @@ export interface UserType {
   username?: string;
   avatar?: string;
   cover_photo?: string;
+  google_id?: string;
 }
 
 const isoDateSchema = z

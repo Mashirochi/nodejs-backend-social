@@ -17,6 +17,7 @@ export default class User {
   username: string;
   avatar: string;
   cover_photo: string;
+  google_id?: string;
 
   constructor(user: UserType) {
     const now = new Date();
