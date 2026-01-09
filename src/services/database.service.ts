@@ -1,8 +1,10 @@
 import Follower from "@/models/schemas/follower.schema";
 import RefreshToken from "@/models/schemas/refresh-token.schema";
 import User from "@/models/schemas/user.schema";
+import Video from "@/models/schemas/video.schema";
 import envConfig from "@/utils/validateEnv";
 import { MongoClient, Collection, Db } from "mongodb";
+import { createClient } from "redis";
 
 const uri = envConfig.MONGO_URI || "";
 class DatabaseService {
@@ -11,6 +13,23 @@ class DatabaseService {
   constructor() {
     this.client = new MongoClient(uri);
     this.db = this.client.db(envConfig.DB_NAME);
+  }
+
+  async connectToRedis() {
+    const client = createClient({
+      username: envConfig.REDIS_USERNAME,
+      password: envConfig.REDIS_PASSWORD,
+      socket: {
+        host: envConfig.REDIS_HOST,
+        port: parseInt(envConfig.REDIS_PORT)
+      }
+    });
+
+    client.on("error", (err) => console.log("Redis Client Error", err));
+
+    await client.connect();
+
+    console.log("Connected to Redis successfully");
   }
 
   async connect() {
@@ -33,6 +52,10 @@ class DatabaseService {
 
   get followers(): Collection<Follower> {
     return this.db.collection("followers");
+  }
+
+  get videos(): Collection<Video> {
+    return this.db.collection("videos");
   }
 }
 

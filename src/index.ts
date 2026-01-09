@@ -14,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(responser);
 
 databaseService.connect().catch(console.error);
+databaseService.connectToRedis().catch(console.error);
 // all api go here
 AppRoute(app);
 app.get("/", (req: Request, res: Response) => {

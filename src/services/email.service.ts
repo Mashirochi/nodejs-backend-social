@@ -17,7 +17,7 @@ class EmailService {
   constructor() {
     this.transporter = nodemailer.createTransport({
       host: envConfig.GOOGLE_HOST,
-      port: envConfig.GOOGLE_PORT,
+      port: parseInt(envConfig.GOOGLE_PORT),
       secure: true, // true for 465, false for other ports
       auth: {
         user: envConfig.GOOGLE_SENDER_EMAIL,

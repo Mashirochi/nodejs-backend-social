@@ -68,3 +68,9 @@ export const resetPasswordController = async (req: Request<ParamsDictionary, any
   const result = await authService.resetPassword(user_id, password);
   return res.send_ok(USERS_MESSAGES.RESET_PASSWORD_SUCCESS, result);
 };
+
+export const refreshTokenController = async (req: Request, res: Response, next: NextFunction) => {
+  const { user_id, verify } = req.decoded_refresh_token as TokenPayload;
+  const result = await authService.refreshToken({ user_id, verify: verify || 0 });
+  return res.send_ok(USERS_MESSAGES.LOGIN_SUCCESS, result);
+};

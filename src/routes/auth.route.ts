@@ -4,6 +4,7 @@ import {
   loginController,
   logoutController,
   registerController,
+  refreshTokenController,
   resendVerifyEmailController,
   resetPasswordController
 } from "@/controllers/auth.controller";
@@ -32,6 +33,7 @@ authRouter.post("/resend-verify-email", ResponseMessage("Resend verify email"), 
 authRouter.post("/forgot-password", ResponseMessage("Forgot password"), validateSchema(forgotPasswordReqBodySchema), forgotPasswordValidator, wrapRequestHandler(forgotPasswordController));
 authRouter.post("/logout", ResponseMessage("Logout user"), validateSchema(logoutReqBodySchema), accessTokenValidator, refreshTokenValidator, wrapRequestHandler(logoutController));
 authRouter.post("/reset-password", ResponseMessage("Reset password"), validateSchema(resetPasswordReqBodySchema), resetPasswordValidator, wrapRequestHandler(resetPasswordController));
+authRouter.post("/refresh-token", ResponseMessage("Refresh token"), validateSchema(logoutReqBodySchema), refreshTokenValidator, wrapRequestHandler(refreshTokenController));
 
 // Google OAuth routes
 authRouter.get("/google/auth-url", ResponseMessage("Get Google auth URL"), wrapRequestHandler(getGoogleAuthURLController));

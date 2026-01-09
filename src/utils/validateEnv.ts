@@ -21,13 +21,16 @@ const envSchema = z.object({
   GOOGLE_REDIRECT_URI: z.string(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
-  GOOGLE_PORT: z.string().transform((val) => {
-    const num = parseInt(val);
-    if (isNaN(num)) {
-      throw new Error("GOOGLE_PORT must be a valid number");
-    }
-    return num;
-  })
+  REDIS_USERNAME: z.string(),
+  REDIS_PASSWORD: z.string(),
+  REDIS_HOST: z.string(),
+  REDIS_PORT: z.string(),
+  GOOGLE_PORT: z.string(),
+  S3_BUCKET_NAME: z.string(),
+  S3_REGION: z.string(),
+  S3_ACCESS_KEY: z.string(),
+  S3_SECRET_KEY: z.string(),
+  S3_ENDPOINT: z.string()
 });
 
 const configEnvSchema = envSchema.safeParse(process.env);

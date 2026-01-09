@@ -150,6 +150,25 @@ class AuthService {
       message: USERS_MESSAGES.RESET_PASSWORD_SUCCESS
     };
   }
+
+  async refreshToken({ user_id, verify }: { user_id: string; verify: UserVerifyStatus }) {
+    // Check if refresh token still exists in database
+    const currentRefreshToken = await databaseService.refreshTokens.findOne({ user_id: new ObjectId(user_id) });
+    if (!currentRefreshToken) {
+      throw new Error("Refresh token not found");
+    }
+
+    // Generate new tokens
+    const [new_access_token, new_refresh_token] = await jwtService.generateAccessAndRefreshTokens(user_id, verify);
+
+    // Update refresh token in database
+    await databaseService.refreshTokens.updateOne({ user_id: new ObjectId(user_id) }, { $set: { token: new_refresh_token } });
+
+    return {
+      access_token: new_access_token,
+      refresh_token: new_refresh_token
+    };
+  }
 }
 
 const authService = new AuthService();
